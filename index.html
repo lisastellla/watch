@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EC日報" />
+  <title>EC日報管理システム</title>
+  <style>
+    :root {
+      --bg: #F0F2F5;
+      --card: #FFFFFF;
+      --accent: #1A6EFF;
+      --accent-dark: #1258CC;
+      --success: #22C55E;
+      --danger: #EF4444;
+      --text: #111827;
+      --text-sub: #6B7280;
+      --border: #E5E7EB;
+      --section-bg: #F8FAFF;
+      --input-bg: #F9FAFB;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Header */
+    .header {
+      background: var(--accent);
+      color: white;
+      padding: 52px 20px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .header .date-badge {
+      font-size: 12px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-weight: 500;
+    }
+
+    /* Main */
+    .main { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--section-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-header .icon {
+      font-size: 16px;
+    }
+    .card-header h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+    /* Field */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      letter-spacing: 0.04em;
+    }
+
+    /* Inputs */
+    select, input[type="date"], input[type="number"], textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 13px;
+      font-size: 16px; /* prevents iOS zoom */
+      font-family: inherit;
+      color: var(--text);
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+    textarea {
+      resize: none;
+      min-height: 80px;
+    }
+    input[type="number"] {
+      text-align: center;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    /* Number row */
+    .num-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .num-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .num-field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-align: center;
+    }
+    .num-control {
+      display: flex;
+      align-items: center;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--input-bg);
+    }
+    .num-btn {
+      background: none;
+      border: none;
+      width: 40px;
+      height: 44px;
+      font-size: 20px;
+      color: var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 300;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .num-btn:active { background: rgba(26,110,255,0.08); }
+    .num-control input {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+      flex: 1;
+      padding: 0;
+      height: 44px;
+    }
+    .num-control input:focus { border-color: transparent; }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:active { background: var(--accent-dark); transform: scale(0.98); }
+    .btn-submit:disabled {
+      background: #9CA3AF;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: white;
+      padding: 12px 22px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 999;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+
+    /* Loading overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .overlay.active { opacity: 1; pointer-events: all; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <h1>📦 EC日報</h1>
+    <span class="date-badge" id="headerDate"></span>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- 基本情報 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">👤</span>
+      <h2>基本情報</h2>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>氏名</label>
+        <select id="name">
+          <option value="">-- 選択してください --</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>日付</label>
+        <input type="date" id="date" />
+      </div>
+    </div>
+  </div>
+
+  <!-- 入荷 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">📥</span>
+      <h2>入荷</h2>
+    </div>
+    <div class="card-body">
+      <div class="num-row">
+        <div class="num-field">
+          <label>検品</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('kenpin',-1)">－</button>
+            <input type="number" id="kenpin" value="0" min="0" />
+            <button class="num-btn" onclick="change('kenpin',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>梱包</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('konpo',-1)">－</button>
+            <input type="number" id="konpo" value="0" min="0" />
+            <button class="num-btn" onclick="change('konpo',1)">＋</button>
+          </div>
+        </div>
+      </div>
+      <div class="num-row">
+        <div class="num-field">
+          <label>在庫チェック</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('zaiko',-1)">－</button>
+            <input type="number" id="zaiko" value="0" min="0" />
+            <button class="num-btn" onclick="change('zaiko',1)">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登録 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">📝</span>
+      <h2>登録</h2>
+    </div>
+    <div class="card-body">
+      <div class="num-row">
+        <div class="num-field">
+          <label>撮影</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('satsuei',-1)">－</button>
+            <input type="number" id="satsuei" value="0" min="0" />
+            <button class="num-btn" onclick="change('satsuei',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>データ入力</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('data',-1)">－</button>
+            <input type="number" id="data" value="0" min="0" />
+            <button class="num-btn" onclick="change('data',1)">＋</button>
+          </div>
+        </div>
+      </div>
+      <div class="num-row">
+        <div class="num-field">
+          <label>Shop登録</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('shop_reg',-1)">－</button>
+            <input type="number" id="shop_reg" value="0" min="0" />
+            <button class="num-btn" onclick="change('shop_reg',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>オークション出品</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('auction_list',-1)">－</button>
+            <input type="number" id="auction_list" value="0" min="0" />
+            <button class="num-btn" onclick="change('auction_list',1)">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 出荷 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">🚚</span>
+      <h2>出荷</h2>
+    </div>
+    <div class="card-body">
+      <div class="num-row">
+        <div class="num-field">
+          <label>伝票作成</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('denpyo',-1)">－</button>
+            <input type="number" id="denpyo" value="0" min="0" />
+            <button class="num-btn" onclick="change('denpyo',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>佐川</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('sagawa',-1)">－</button>
+            <input type="number" id="sagawa" value="0" min="0" />
+            <button class="num-btn" onclick="change('sagawa',1)">＋</button>
+          </div>
+        </div>
+      </div>
+      <div class="num-row">
+        <div class="num-field">
+          <label>Shop出荷</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('shop_ship',-1)">－</button>
+            <input type="number" id="shop_ship" value="0" min="0" />
+            <button class="num-btn" onclick="change('shop_ship',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>オークション出荷</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('auction_ship',-1)">－</button>
+            <input type="number" id="auction_ship" value="0" min="0" />
+            <button class="num-btn" onclick="change('auction_ship',1)">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 対応 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">💬</span>
+      <h2>対応</h2>
+    </div>
+    <div class="card-body">
+      <div class="num-row">
+        <div class="num-field">
+          <label>メール対応</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('mail',-1)">－</button>
+            <input type="number" id="mail" value="0" min="0" />
+            <button class="num-btn" onclick="change('mail',1)">＋</button>
+          </div>
+        </div>
+        <div class="num-field">
+          <label>電話対応</label>
+          <div class="num-control">
+            <button class="num-btn" onclick="change('tel',-1)">－</button>
+            <input type="number" id="tel" value="0" min="0" />
+            <button class="num-btn" onclick="change('tel',1)">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 備考 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="icon">📋</span>
+      <h2>備考</h2>
+    </div>
+    <div class="card-body">
+      <textarea id="memo" placeholder="自由に入力してください…"></textarea>
+    </div>
+  </div>
+
+  <!-- 送信 -->
+  <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+    <span>送信する</span>
+  </button>
+
+</main>
+
+<!-- Loading overlay -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // =============================================
+  // ★ 設定エリア ★
+  // =============================================
+
+  // ① 員工名单 - 後期增加員工、在此修改即可
+  const EMPLOYEES = [
+    "張麗",
+    "劉静",
+    "鈴木久美",
+    "趙一穎",
+    "孫安霖",
+    // ここに追加: "新メンバー名",
+  ];
+
+  // ② Google Apps Script の Web App URL
+  // デプロイ後にここを書き換えてください
+  const GAS_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+  // =============================================
+
+  // 員工名単を select に追加
+  const nameSelect = document.getElementById("name");
+  EMPLOYEES.forEach(emp => {
+    const opt = document.createElement("option");
+    opt.value = emp;
+    opt.textContent = emp;
+    nameSelect.appendChild(opt);
+  });
+
+  // 今日の日付をセット
+  function todayStr() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  document.getElementById("date").value = todayStr();
+
+  // ヘッダー日付表示
+  function updateHeaderDate() {
+    const val = document.getElementById("date").value;
+    if (!val) return;
+    const d = new Date(val + "T00:00:00");
+    const weekdays = ["日","月","火","水","木","金","土"];
+    const wday = weekdays[d.getDay()];
+    document.getElementById("headerDate").textContent =
+      `${d.getMonth()+1}/${d.getDate()}（${wday}）`;
+  }
+  document.getElementById("date").addEventListener("change", updateHeaderDate);
+  updateHeaderDate();
+
+  // ＋／－ボタン
+  function change(id, delta) {
+    const el = document.getElementById(id);
+    const val = Math.max(0, parseInt(el.value || "0") + delta);
+    el.value = val;
+  }
+
+  // Toast
+  function showToast(msg, type = "") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "toast " + type;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { t.classList.add("show"); });
+    });
+    setTimeout(() => { t.classList.remove("show"); }, 3000);
+  }
+
+  // フォーム送信
+  async function submitForm() {
+    const name = document.getElementById("name").value;
+    const date = document.getElementById("date").value;
+
+    if (!name) { showToast("⚠️ 氏名を選択してください", "error"); return; }
+    if (!date) { showToast("⚠️ 日付を入力してください", "error"); return; }
+
+    const payload = {
+      日付: date,
+      氏名: name,
+      検品:              parseInt(document.getElementById("kenpin").value) || 0,
+      梱包:              parseInt(document.getElementById("konpo").value)  || 0,
+      在庫チェック:      parseInt(document.getElementById("zaiko").value)  || 0,
+      撮影:              parseInt(document.getElementById("satsuei").value)|| 0,
+      データ入力:        parseInt(document.getElementById("data").value)   || 0,
+      Shop登録:          parseInt(document.getElementById("shop_reg").value)||0,
+      オークション出品:  parseInt(document.getElementById("auction_list").value)||0,
+      伝票作成:          parseInt(document.getElementById("denpyo").value) || 0,
+      佐川:              parseInt(document.getElementById("sagawa").value) || 0,
+      Shop出荷:          parseInt(document.getElementById("shop_ship").value)||0,
+      オークション出荷:  parseInt(document.getElementById("auction_ship").value)||0,
+      メール対応:        parseInt(document.getElementById("mail").value)   || 0,
+      電話対応:          parseInt(document.getElementById("tel").value)    || 0,
+      備考:              document.getElementById("memo").value.trim(),
+    };
+
+    if (GAS_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+      showToast("⚠️ GAS URLが未設定です（README参照）", "error");
+      return;
+    }
+
+    // ローディング表示
+    document.getElementById("overlay").classList.add("active");
+    document.getElementById("submitBtn").disabled = true;
+
+    try {
+      await fetch(GAS_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      showToast("✅ 送信完了しました！", "success");
+      resetForm();
+    } catch (e) {
+      showToast("❌ 送信失敗。ネット接続を確認してください", "error");
+    } finally {
+      document.getElementById("overlay").classList.remove("active");
+      document.getElementById("submitBtn").disabled = false;
+    }
+  }
+
+  function resetForm() {
+    document.getElementById("name").value = "";
+    document.getElementById("date").value = todayStr();
+    updateHeaderDate();
+    ["kenpin","konpo","zaiko","satsuei","data","shop_reg","auction_list",
+     "denpyo","sagawa","shop_ship","auction_ship","mail","tel"].forEach(id => {
+      document.getElementById(id).value = 0;
+    });
+    document.getElementById("memo").value = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+</script>
+</body>
+</html>
